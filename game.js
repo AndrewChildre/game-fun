@@ -28,7 +28,8 @@ loadSprite('lantern', 'wiSiY09.png'),
 loadSprite('slicer', 'c6JFi5Z.png'),
 loadSprite('bad-guy', 'Ei1VnX8.png'),
 loadSprite('stair', 'VghkL08.png'),
-loadSprite('backgnd', 'u4DVsx6.png',)
+loadSprite('backgnd', 'u4DVsx6.png',),
+loadSprite('kaboom', 'o9WizfI.png')
 
 scene('game', (
   {level, score}
@@ -95,7 +96,11 @@ scene('game', (
         value: score,
       }
     ])
-   const player = add([sprite('guy-right'), pos(10, 290)])
+   const player = add([sprite('guy-right'), 
+   pos(10, 290),
+   {
+     dir: vec2(1,0)
+   }])
 
    player.action(() => {
      player.resolve()
@@ -108,22 +113,40 @@ scene('game', (
      })
    })
 
-    const moveSpeed = 120
+
+
+      function spawnBoom(p){
+       const obj = add([sprite('kaboom'), pos(p), 'kaboom'])
+       wait(1, () => {
+         destroy (obj)
+       })
+      }
+      keyPress('space', () => {
+        spawnBoom(player.pos.add(player.dir.scale(48)))
+      })
+
+        const moveSpeed = 120
    keyDown('left', () => {
      player.changeSprite('guy-left')
      player.move(-moveSpeed, 0)
+     player.dir =vec2(-1, 0)
    })
+  
+
     keyDown('right', () => {
       player.changeSprite('guy-right')
      player.move(moveSpeed, 0)
+     player.dir = vec2(1,0)
    })
     keyDown('up', () => {
       player.changeSprite('guy-up')
      player.move(0, -moveSpeed)
+     player.dir = vec2(0, -1)
    })
     keyDown('down', () => {
       player.changeSprite('guy-down')
      player.move(0, moveSpeed)
+     player.dir = vec2(0,1)
    })
     const slicerSpeed = 120
    action('slicer', (s) => {
@@ -140,6 +163,15 @@ scene('game', (
         s.dir = - s.dir
         s.timer = rand(5)
       }
+      collides('kaboom', 'bad-guy', (k, s) => {
+        camShake(3)
+          wait(1, () => {
+            destroy(k)
+          })
+          destroy(s)
+          scoreLabel.value++
+          scoreLabel.text = scoreLabel.value
+      })
 
    })
    player.overlaps('dangerous', () => {
