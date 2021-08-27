@@ -36,20 +36,33 @@ scene('game', (
 
     layers(['backgnd', 'obj', 'ui'], 'obj')
 
-    const map = [
-
+    const maps = [
+      [ 
 'wtt#t^ttttttttttx',
 'l               r',
 'l   *           r',
 'l               r',
 'l    *        1 r',
-'l     %         r',
-'()              r',
+'(     %         r',
+'l               r',
 'l               #',
 'l               r',
-'ybbbbbbbbbbbbbbbz',
+'ybbbbbbbbbbbbbbbz',],
 
+      [
+'wtt#ttttttttttttx',
+'l               r',
+'l   *       ?   #',
+'l               r',
+'l  1            r',
+'#     %         r',
+'l               r',
+'l     *         #',
+'l               r',
+'ybbbbbbbbbbbbbbbz'
+      ],
     ]
+    
    const levelConfig = {
      width: 48,
      height: 48,
@@ -62,16 +75,16 @@ scene('game', (
     'y' : [sprite('btm-left-cnr'), solid(), 'wall'],
     'z' : [sprite('btm-right-cnr'), solid(), 'wall'],
     '(' : [sprite('left-door')],
-    '^' : [sprite('top-door')],
-    '?' : [sprite('stair')],
+    '^' : [sprite('top-door'), 'next-level'],
+    '?' : [sprite('stair'), 'next-level'],
     '*' : [sprite('slicer'), 'slicer', 'dangerous',{ dir: -1}],
-    '1' : [sprite('bad-guy'), 'dangerous'],
+    '1' : [sprite('bad-guy'), 'dangerous','bad-guy', { dir: -1, timer: 0}],
     '#' : [sprite('lantern'), solid(), 'wall'],
     '%' : [sprite('fire-can'), solid()],
 
    }
 
-    addLevel(map, levelConfig)
+    addLevel(maps[level], levelConfig)
     // add([sprite('backgnd'), layer('backgnd')])
     const scoreLabel = add([
       scale(4),
@@ -86,6 +99,13 @@ scene('game', (
 
    player.action(() => {
      player.resolve()
+   })
+
+   player.overlaps('next-level', () => {
+     go('game', {
+       level: (level +1) % maps.length,
+       score: scoreLabel.value
+     })
    })
 
     const moveSpeed = 120
@@ -109,8 +129,18 @@ scene('game', (
    action('slicer', (s) => {
       s.move(s.dir * slicerSpeed, 0) 
    })
-   collides('slicer', 'wall', (s) => {
+   collides('dangerous', 'wall', (s) => {
      s.dir = -s.dir
+   })
+   const badGuySpeed = 200
+   action('bad-guy', (s) => {
+      s.move(0, s.dir * badGuySpeed)
+      s.timer -= dt()
+      if(s.timer <=0){
+        s.dir = - s.dir
+        s.timer = rand(5)
+      }
+
    })
    player.overlaps('dangerous', () => {
      go('lose', {score: scoreLabel.value})
